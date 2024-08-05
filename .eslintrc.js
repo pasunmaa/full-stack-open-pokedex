@@ -1,4 +1,4 @@
-export default {
+module.exports = {
   'env': {
     'browser': true,
     'es6': true,
@@ -19,6 +19,11 @@ export default {
   'plugins': [
     'react', 'jest'
   ],
+  'settings': {
+    'react': {
+      'version': 'detect' // Automatically detect the React version
+    }
+  },
   'rules': {
     'indent': [
       'error',
