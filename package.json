@@ -1,7 +1,8 @@
 {
   "name": "fullstackopen-cicd",
   "version": "1.0.0",
-  "description": "Full Stack Open",
+  "type": "module",
+  "description": "Full Stack Open - pokedex application for exercises",
   "main": "src/index.js",
   "scripts": {
     "start": "webpack-dev-server --open --mode development",
