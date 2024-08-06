@@ -28,6 +28,8 @@ jobs:
           fi
           echo "$combined_messages"
           echo "$skip"
+          echo "$github.event.head_commit.message"
+          echo "$GITHUB_ENV"
   # simple_deployment_pipeline:
   #   needs: [is_skip_presen_in_pull_request_combined_messages]
   #   timeout-minutes: 60
