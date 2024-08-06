@@ -2,7 +2,9 @@ on:
   push:
     branches:
       - main
-      - render
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
 jobs:
   simple_deployment_pipeline:
     timeout-minutes: 60
