@@ -11,43 +11,61 @@ on:
     branches: [main]
     types: [opened, synchronize]
 jobs:
-  simple_deployment_pipeline:
-    timeout-minutes: 60
+  is_skip_presen_in_pull_request_combined_messages:
+    if: ${{ github.event_name == 'push' }}  # if the event is a pull request, skip this job
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install dependencies 
-        run: npm install  
-      - name: Check style
-        run: npm run eslint
-      - run: npm run build
-      - name: Run all tests
-        run: npm test
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        run: npx playwright test
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-            name: playwright-report
-            path: playwright-report/
-            retention-days: 30
-      - if: ${{ github.env.CONDITION == 'true' }}
-        name: Trigger deployment
-        run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
-  tag_release:
-    needs: [simple_deployment_pipeline]
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-      - if: ${{ github.env.CONDITION == 'true' }}
-        name: Bump version and push tag
-        uses: anothrNick/github-tag-action@1.70.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BUMP: patch
-          DRY_RUN: false
+      - name: Combine PR messages
+        id: combine_pr_messages
+        run: |
+          messages=$(jq -r '.commits[].message' < "${{ github.event_path }}")
+          combined_messages=$(echo "$messages" | tr '\n' ' ')
+          if echo "$combined_messages" | grep -q '#skip'; then
+            echo "skip=true" >> $GITHUB_ENV
+          else
+            echo "skip=false" >> $GITHUB_ENV
+          fi
+          echo "$combined_messages"
+          echo "$github.env.skip"
+  # simple_deployment_pipeline:
+  #   needs: [is_skip_presen_in_pull_request_combined_messages]
+  #   timeout-minutes: 60
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #     - name: Install dependencies 
+  #       run: npm install  
+  #     - name: Check style
+  #       run: npm run eslint
+  #     - run: npm run build
+  #     - name: Run all tests
+  #       run: npm test
+  #     - name: Install Playwright Browsers
+  #       run: npx playwright install --with-deps
+  #     - name: Run Playwright tests
+  #       run: npx playwright test
+  #     - uses: actions/upload-artifact@v4
+  #       if: always()
+  #       with:
+  #           name: playwright-report
+  #           path: playwright-report/
+  #           retention-days: 30
+  #     - if: ${{ github.env.skip == 'true' }}
+  #       name: Trigger deployment
+  #       run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
+  # tag_release:
+  #   needs: [simple_deployment_pipeline]
+  #   runs-on: ubuntu-20.04
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - if: ${{ github.env.skip == 'true' }}
+  #       name: Bump version and push tag
+  #       uses: anothrNick/github-tag-action@1.70.0
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         DEFAULT_BUMP: patch
+  #         DRY_RUN: false
