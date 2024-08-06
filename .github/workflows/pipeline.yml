@@ -27,7 +27,7 @@ jobs:
             echo "skip=false" >> $GITHUB_ENV
           fi
           echo "$combined_messages"
-          echo "$github.env.skip"
+          echo "$skip"
   # simple_deployment_pipeline:
   #   needs: [is_skip_presen_in_pull_request_combined_messages]
   #   timeout-minutes: 60
