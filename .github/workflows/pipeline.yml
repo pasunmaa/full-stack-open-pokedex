@@ -2,6 +2,9 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
 jobs:
   simple_deployment_pipeline:
     timeout-minutes: 60
@@ -28,5 +31,6 @@ jobs:
             name: playwright-report
             path: playwright-report/
             retention-days: 30
-
-      
+      - if: ${{ github.event_name == 'push' }}  
+        name: Trigger deployment
+        run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
