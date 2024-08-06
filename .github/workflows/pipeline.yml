@@ -31,11 +31,11 @@ jobs:
         env:
           COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMIT_MESSAGES"
-      - name: combine_commit_messages
+      - name: combine commit messages
         env:
           COMBINED_MESSAGES: ${{ join(env.COMMIT_MESSAGES, ' ') }}
         run: echo "$COMBINED_MESSAGES"
-      - name: Contains_skip
+      - name: Contains skip
         env:
           SKIP: ${{ contains(env.COMMIT_MESSAGES, '#skip ') }}
         run: echo "$SKIP"
@@ -60,8 +60,8 @@ jobs:
       #       echo "skip=false" >> $GITHUB_ENV
       #     fi
       #     echo "$combined_messages"
-      - name: echo_skip
-        run: echo "$skip"
+      #- name: echo_skip
+      #  run: echo "$skip"
           
   # simple_deployment_pipeline:
   #   needs: [is_skip_presen_in_pull_request_combined_messages]
