@@ -1,8 +1,5 @@
 #!/bin/bash
 
-echo "Build script"
+echo "Build script v2"
 npm install
 npm run build
-
-
-# add the commands here
