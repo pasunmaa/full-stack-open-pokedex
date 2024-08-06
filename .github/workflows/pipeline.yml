@@ -1,7 +1,7 @@
 name: full-stack-open-pokedex-pipeline
 
 env:
-  CONDITION: ${{ github.event_name == 'push' && !contains(github.event.head_commit.message, '#skip') }}
+  IS_PULL_REQUEST: ${{ github.event_name == 'push' }}
   # HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
   # GITHUB_EVENT_PATH: ${{ github.event_path }}
   # COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
@@ -19,33 +19,49 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v4
-      - name: github context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: commits
-        env:
-          COMMITS: ${{ toJson(github.event.commits) }}
-        run: echo "$COMMITS"
+      # - name: github context
+      #   env:
+      #     GITHUB_CONTEXT: ${{ toJson(github) }}
+      #   run: echo "$GITHUB_CONTEXT"
+      # - name: commits
+      #   env:
+      #     COMMITS: ${{ toJson(github.event.commits) }}
+      #   run: echo "$COMMITS"
       - name: commit messages
         env:
           COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
         run: echo "$COMMIT_MESSAGES"
-      - name: Combine PR messages
-        id: combine_pr_messages
-        run: |
-          messages=$(jq -r '.commits[].message' < "${{ github.event_path }}")
-          combined_messages=$(echo "$messages" | tr '\n' ' ')
-          if echo "$combined_messages" | grep -q '#skip'; then
-            echo "skip=true" >> $GITHUB_ENV
-          else
-            echo "skip=false" >> $GITHUB_ENV
-          fi
-          echo "$combined_messages"
+      - name: combine_commit_messages
+        env:
+          COMBINED_MESSAGES: ${{ join(env.COMMIT_MESSAGES, ' ') }}
+        run: echo "$COMBINED_MESSAGES"
+      - name: Contains_skip
+        env:
+          SKIP: ${{ contains(env.COMMIT_MESSAGES, '#skip ') }}
+        run: echo "$SKIP"
+        
+      # - name: Check for #skip in commit messages
+      #   run: |
+      #     combined_messages=$(echo "$COMMIT_MESSAGES" | tr '\n' ' ')
+      #     if echo "$combined_messages" | grep -q '#skip'; then
+      #       echo "skip=true" >> $GITHUB_ENV
+      #     else
+      #       echo "skip=false" >> $GITHUB_ENV
+      #     fi
+      #     echo "$combined_messages"
+      # - name: Combine PR messages
+      #   id: combine_pr_messages
+      #   run: |
+      #     messages=$(jq -r '.commits[].message' < "${{ github.event_path }}")
+      #     combined_messages=$(echo "$messages" | tr '\n' ' ')
+      #     if echo "$combined_messages" | grep -q '#skip'; then
+      #       echo "skip=true" >> $GITHUB_ENV
+      #     else
+      #       echo "skip=false" >> $GITHUB_ENV
+      #     fi
+      #     echo "$combined_messages"
       - name: echo_skip
         run: echo "$skip"
-      - name: echo_head_message
-        run: echo "$github.event.head_commit.message"
           
   # simple_deployment_pipeline:
   #   needs: [is_skip_presen_in_pull_request_combined_messages]
