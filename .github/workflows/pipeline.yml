@@ -36,7 +36,7 @@ jobs:
           # if any of commit messages contains '#skip', set SKIP TO true
           SKIP: ${{ contains(join(github.event.commits.*.message, ' '), '#skip') }}
         run: |
-          echo "Combined messages: " ${{ env.COMBINED_MESSAGES }}
+          echo "Combined messages: ${{ env.COMBINED_MESSAGES }}"
           echo "$SKIP"
           echo "skip=$SKIP" >> $GITHUB_OUTPUT  # make skip available to other jobs
   use_skip_value:
@@ -85,7 +85,7 @@ jobs:
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   
   tag_release:
-    needs: [simple_deployment_pipeline]
+    needs: [is_skip_present_in_combined_commit_messages, simple_deployment_pipeline]
     runs-on: ubuntu-20.04
     env:
       SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
