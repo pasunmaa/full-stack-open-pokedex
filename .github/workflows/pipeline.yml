@@ -25,12 +25,13 @@ jobs:
   is_skip_present_in_combined_commit_messages:
     runs-on: ubuntu-20.04
     # if the event is a push, skip this job
-    # if: ${{ env.IS_PUSH }}
+    if: ${{ github.event.pull_request.merged == true }}
     outputs:
       skip: ${{ steps.define_skip.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
       - id: define_skip
+        name: Define skip
         env:
           COMBINED_MESSAGES: ${{ join(github.event.commits.*.message, ' ') }}
           # if any of commit messages contains '#skip', set SKIP TO true
