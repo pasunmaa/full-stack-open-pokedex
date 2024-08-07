@@ -11,10 +11,9 @@ on:
   push:
     branches:
       - main
-      - exercise-11.16
   pull_request:
     branches: [main]
-    types: [opened, synchronize, closed]
+    types: [closed] #
 jobs:
   global_events:
     runs-on: ubuntu-20.04
@@ -33,10 +32,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: define_skip
         env:
+          COMBINED_MESSAGES: ${{ join(github.event.commits.*.message, ' ') }}
           # if any of commit messages contains '#skip', set SKIP TO true
           SKIP: ${{ contains(join(github.event.commits.*.message, ' '), '#skip') }}
         run: |
-          echo "Combined messages: ${{ join(github.event.commits.*.message, ' ') }}"
+          echo "Combined messages: " ${{ env.COMBINED_MESSAGES }}
           echo "$SKIP"
           echo "skip=$SKIP" >> $GITHUB_OUTPUT  # make skip available to other jobs
   use_skip_value:
@@ -80,7 +80,7 @@ jobs:
             name: playwright-report
             path: playwright-report/
             retention-days: 30
-      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
+      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'false' }}
         name: Trigger deployment
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   tag_release:
@@ -90,7 +90,7 @@ jobs:
       SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
-      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
+      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'false' }}
         name: Bump version and push tag
         uses: anothrNick/github-tag-action@1.70.0
         env:
