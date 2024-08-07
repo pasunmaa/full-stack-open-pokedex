@@ -13,7 +13,7 @@ on:
       - main
   pull_request:
     branches: [main]
-    types: [closed] #
+    types: [ opened, synchronize ] # closed
 jobs:
   global_events:
     runs-on: ubuntu-20.04
@@ -80,7 +80,7 @@ jobs:
             name: playwright-report
             path: playwright-report/
             retention-days: 30
-      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'false' }}
+      - if: ${{ env.IS_PUSH && env.SKIP == 'false' }}
         name: Trigger deployment
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   
@@ -95,7 +95,7 @@ jobs:
           echo "PR merged: ${{ env.IS_PR_MERGED }}"
           echo "SKIP: ${{ env.SKIP }}"
       - uses: actions/checkout@v4
-      - if: ${{ env.IS_PR_MERGED && env.SKIP == 'false' }}
+      - if: ${{ env.IS_PUSH && env.SKIP == 'false' }}
         name: Bump version and push tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
