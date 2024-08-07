@@ -1,64 +1,14 @@
-name: full-stack-open-pokedex-pipeline
-
-env:
-  IS_PUSH: ${{ github.event_name == 'push' }}
-  IS_PR_MERGED: ${{ github.event.pull_request.merged == true }}
-  # HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-  # GITHUB_EVENT_PATH: ${{ github.event_path }}
-  # COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
-
 on:
   push:
     branches:
       - main
-  # pull_request:
-  #   branches: [main]
-  #   types: [ opened, synchronize ] # closed
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize]
 jobs:
-  global_events:
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Show global events
-        run: |
-          echo "The event is a push: ${{ env.IS_PUSH }}"
-          echo "The PR is merged: ${{ env.IS_PR_MERGED }}"
-  is_skip_present_in_combined_commit_messages:
-    runs-on: ubuntu-20.04
-    # if the event is a push, skip this job
-    if: ${{ github.event.pull_request.merged == true }}
-    outputs:
-      skip: ${{ steps.define_skip.outputs.skip }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: define_skip
-        name: Define skip
-        env:
-          COMBINED_MESSAGES: ${{ join(github.event.commits.*.message, ' ') }}
-          # if any of commit messages contains '#skip', set SKIP TO true
-          SKIP: ${{ contains(join(github.event.commits.*.message, ' '), '#skip') }}
-        run: |
-          echo "Combined messages: ${{ env.COMBINED_MESSAGES }}"
-          echo "$SKIP"
-          echo "skip=$SKIP" >> $GITHUB_OUTPUT  # make skip available to other jobs
-  use_skip_value:
-    needs: [is_skip_present_in_combined_commit_messages]
-    runs-on: ubuntu-20.04
-    env:
-      SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
-    steps:
-      - run: 
-          echo "The value of SKIP is ${{ env.SKIP }}"   # do not use github.env.SKIP
-      - if: ${{ env.SKIP == 'true' }} # do not use github.env.skip, but env.SKIP
-        name: Trigger skip echo if true
-        run: |
-          echo "The value of env.SKIP is supposed to be true - ${{ env.SKIP }}"
-          
   simple_deployment_pipeline:
-    needs: [is_skip_present_in_combined_commit_messages]
     timeout-minutes: 60
     runs-on: ubuntu-20.04
-    env:
-      SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -81,25 +31,18 @@ jobs:
             name: playwright-report
             path: playwright-report/
             retention-days: 30
-      - if: ${{ env.IS_PUSH && env.SKIP == 'false' }}
+      - if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.message, ' '), '#skip') }}
         name: Trigger deployment
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
-  
   tag_release:
-    needs: [is_skip_present_in_combined_commit_messages, simple_deployment_pipeline]
+    needs: [simple_deployment_pipeline]
     runs-on: ubuntu-20.04
-    env:
-      SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
     steps:
-      - name: Show env variables
-        run: |
-          echo "PR merged: ${{ env.IS_PR_MERGED }}"
-          echo "SKIP: ${{ env.SKIP }}"
       - uses: actions/checkout@v4
-      - if: ${{ env.IS_PUSH && env.SKIP == 'false' }}
+      - if: ${{ github.event_name == 'push' && contains(join(github.event.commits.*.message, ' '), '#skip') }}
         name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.70.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           DRY_RUN: false
-        uses: anothrNick/github-tag-action@1.70.0
