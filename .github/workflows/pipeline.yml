@@ -36,9 +36,9 @@ jobs:
         if: failure()
         with:
           severity: error
-          text: Build Failed!
+          text: 'Build Failed!'
           #description: The top half of the event description.
-          #details: The bottom half of the event description. 
+          details: Custom information about the failure here. Failure happend before deployment. 
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - if: ${{ github.event_name == 'push' && (contains(join(github.event.commits.*.message, ' '), '#skip') == false) }}
         name: Trigger deployment
@@ -48,14 +48,14 @@ jobs:
         if: success()
         with:
           severity: info
-          text: Deployment succeeded!
+          text: 'Deployment succeeded :-)'
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - name: Notify deployment failure
         uses: rjstone/discord-webhook-notify@v1.0.4
         if: failure()
         with:
           severity: error
-          text: Deployment Failed!
+          text: 'Deployment failed!'
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
   tag_release:
     needs: [simple_deployment_pipeline]
