@@ -31,6 +31,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: define_skip
+        name: Define skip
         env:
           COMBINED_MESSAGES: ${{ join(github.event.commits.*.message, ' ') }}
           # if any of commit messages contains '#skip', set SKIP TO true
