@@ -76,7 +76,7 @@ jobs:
     steps:
       - run: 
           echo "The value of SKIP is ${{ env.SKIP }}"   # do not use github.env.SKIP
-      - if: ${{ github.env.skip == 'true' }}
+      - if: ${{ env.SKIP == 'true' }} # do not use github.env.skip
         name: Trigger skip echo if true
         run: |
           echo "The value of env.SKIP is supposed to be true - ${{ env.SKIP }}"
