@@ -45,17 +45,21 @@ jobs:
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
       - name: Notify successful deployment
         uses: rjstone/discord-webhook-notify@v1.0.4
-        if: success()
+        if: ${{ success() }}
         with:
           severity: info
-          text: 'Deployment succeeded :-)'
+          text: 'Deployment of pokedex to Render succeeded :-)'
+          description: ""
+          details: ""
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
       - name: Notify deployment failure
         uses: rjstone/discord-webhook-notify@v1.0.4
-        if: failure()
+        if: ${{ failure() }}
         with:
           severity: error
-          text: 'Deployment failed!'
+          text: 'Deployment of podedex to Render failed.'
+          description: "Initiator: ${{ github.actor }}"
+          details: "Repo: ${{ github.repository }}"
           webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
   tag_release:
     needs: [simple_deployment_pipeline]
