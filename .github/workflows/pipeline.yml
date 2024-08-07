@@ -25,7 +25,7 @@ jobs:
   is_skip_present_in_combined_commit_messages:
     runs-on: ubuntu-20.04
     # if the event is a push, skip this job
-    # if: ${{ env.IS_PUSH }}
+    if: ${{ github.event.pull_request.merged == true }}
     outputs:
       skip: ${{ steps.define_skip.outputs.skip }}
     steps:
