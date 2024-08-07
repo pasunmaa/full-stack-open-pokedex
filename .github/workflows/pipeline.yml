@@ -16,16 +16,17 @@ on:
     branches: [main]
     types: [opened, synchronize]
 jobs:
-  # global_events:
-  #   runs-on: ubuntu-20.04
-  #   steps:
-  #     - name: Show global events
-  #       run: |
-  #         echo "The event is a push: ${{ env.IS_PUSH }}"
-  #         echo "The PR is merged: ${{ env.IS_PR_MERGED }}"
-  is_skip_present_in_combined_commit_messages:
-    if: ${{ env.IS_PUSH }}  # if the event is a pull request, skip this job
+  global_events:
     runs-on: ubuntu-20.04
+    steps:
+      - name: Show global events
+        run: |
+          echo "The event is a push: ${{ env.IS_PUSH }}"
+          echo "The PR is merged: ${{ env.IS_PR_MERGED }}"
+  is_skip_present_in_combined_commit_messages:
+    runs-on: ubuntu-20.04
+    # if the event is a push, skip this job
+    # if: ${{ env.IS_PUSH }}
     outputs:
       skip: ${{ steps.define_skip.outputs.skip }}
     steps:
@@ -78,7 +79,7 @@ jobs:
   #           name: playwright-report
   #           path: playwright-report/
   #           retention-days: 30
-  #     - if: ${{ env.SKIP == 'true' }}
+  #     - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
   #       name: Trigger deployment
   #       run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   # tag_release:
@@ -88,7 +89,7 @@ jobs:
   #     SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - if: ${{ env.SKIP == 'true' }}
+  #     - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
   #       name: Bump version and push tag
   #       uses: anothrNick/github-tag-action@1.70.0
   #       env:
