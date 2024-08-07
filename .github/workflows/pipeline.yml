@@ -1,7 +1,8 @@
 name: full-stack-open-pokedex-pipeline
 
 env:
-  IS_PULL_REQUEST: ${{ github.event_name == 'push' }}
+  IS_PUSH: ${{ github.event_name == 'push' }}
+  IS_PR_MERGED: ${{ github.event.pull_request.merged == true }}
   # HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
   # GITHUB_EVENT_PATH: ${{ github.event_path }}
   # COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
@@ -10,63 +11,52 @@ on:
   push:
     branches:
       - main
+      - exercise-11.16
   pull_request:
     branches: [main]
     types: [opened, synchronize]
 jobs:
-  is_skip_presen_in_pull_request_combined_messages:
-    if: ${{ github.event_name == 'push' }}  # if the event is a pull request, skip this job
+  global_events:
     runs-on: ubuntu-20.04
     steps:
+      - name: Show global events
+        run: |
+          echo "The event is a push: ${{ env.IS_PUSH }}"
+          echo "The PR is merged: ${{ env.IS_PR_MERGED }}"
+  is_skip_present_in_combined_commit_messages:
+    runs-on: ubuntu-20.04
+    # if the event is a push, skip this job
+    # if: ${{ env.IS_PUSH }}
+    outputs:
+      skip: ${{ steps.define_skip.outputs.skip }}
+    steps:
       - uses: actions/checkout@v4
-      # - name: github context
-      #   env:
-      #     GITHUB_CONTEXT: ${{ toJson(github) }}
-      #   run: echo "$GITHUB_CONTEXT"
-      # - name: commits
-      #   env:
-      #     COMMITS: ${{ toJson(github.event.commits) }}
-      #   run: echo "$COMMITS"
-      - name: commit messages
+      - id: define_skip
         env:
-          COMMIT_MESSAGES: ${{ toJson(github.event.commits.*.message) }}
-        run: echo "$COMMIT_MESSAGES"
-      - name: combine commit messages
-        env:
-          COMBINED_MESSAGES: ${{ join(env.COMMIT_MESSAGES, ' ') }}
-        run: echo "$COMBINED_MESSAGES"
-      - name: Contains skip
-        env:
-          SKIP: ${{ contains(env.COMMIT_MESSAGES, '#skip ') }}
-        run: echo "$SKIP"
-        
-      # - name: Check for #skip in commit messages
-      #   run: |
-      #     combined_messages=$(echo "$COMMIT_MESSAGES" | tr '\n' ' ')
-      #     if echo "$combined_messages" | grep -q '#skip'; then
-      #       echo "skip=true" >> $GITHUB_ENV
-      #     else
-      #       echo "skip=false" >> $GITHUB_ENV
-      #     fi
-      #     echo "$combined_messages"
-      # - name: Combine PR messages
-      #   id: combine_pr_messages
-      #   run: |
-      #     messages=$(jq -r '.commits[].message' < "${{ github.event_path }}")
-      #     combined_messages=$(echo "$messages" | tr '\n' ' ')
-      #     if echo "$combined_messages" | grep -q '#skip'; then
-      #       echo "skip=true" >> $GITHUB_ENV
-      #     else
-      #       echo "skip=false" >> $GITHUB_ENV
-      #     fi
-      #     echo "$combined_messages"
-      #- name: echo_skip
-      #  run: echo "$skip"
+          # if any of commit messages contains '#skip', set SKIP TO true
+          SKIP: ${{ contains(join(github.event.commits.*.message, ' '), '#skip') }}
+        run: |
+          echo "$SKIP"
+          echo "skip=$SKIP" >> $GITHUB_OUTPUT  # make skip available to other jobs
+  use_skip_value:
+    needs: [is_skip_present_in_combined_commit_messages]
+    runs-on: ubuntu-20.04
+    env:
+      SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
+    steps:
+      - run: 
+          echo "The value of SKIP is ${{ env.SKIP }}"   # do not use github.env.SKIP
+      - if: ${{ env.SKIP == 'true' }} # do not use github.env.skip, but env.SKIP
+        name: Trigger skip echo if true
+        run: |
+          echo "The value of env.SKIP is supposed to be true - ${{ env.SKIP }}"
           
   # simple_deployment_pipeline:
-  #   needs: [is_skip_presen_in_pull_request_combined_messages]
+  #   needs: [is_skip_present_in_combined_commit_messages]
   #   timeout-minutes: 60
   #   runs-on: ubuntu-20.04
+  #   env:
+  #     SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
   #   steps:
   #     - uses: actions/checkout@v4
   #     - uses: actions/setup-node@v4
@@ -89,15 +79,17 @@ jobs:
   #           name: playwright-report
   #           path: playwright-report/
   #           retention-days: 30
-  #     - if: ${{ github.env.skip == 'true' }}
+  #     - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
   #       name: Trigger deployment
   #       run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
   # tag_release:
   #   needs: [simple_deployment_pipeline]
   #   runs-on: ubuntu-20.04
+  #   env:
+  #     SKIP: ${{ needs.is_skip_present_in_combined_commit_messages.outputs.skip }}
   #   steps:
   #     - uses: actions/checkout@v4
-  #     - if: ${{ github.env.skip == 'true' }}
+  #     - if: ${{ env.IS_PR_MERGED && env.SKIP == 'true' }}
   #       name: Bump version and push tag
   #       uses: anothrNick/github-tag-action@1.70.0
   #       env:
