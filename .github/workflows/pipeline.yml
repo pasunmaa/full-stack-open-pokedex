@@ -109,7 +109,7 @@ jobs:
         run: echo "The status of the last action was ${{ job.simple_deployment_pipeline.outcome }}"
       - name: Set PR status to success
         if: ${{ success() }}
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.repos.createCommitStatus({
