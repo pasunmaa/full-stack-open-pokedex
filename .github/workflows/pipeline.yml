@@ -99,3 +99,25 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEFAULT_BUMP: patch
           DRY_RUN: false
+
+  github_action_status_report:
+    needs: [simple_deployment_pipeline]
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get the status of the last action
+        run: echo "The status of the last action was ${{ job.simple_deployment_pipeline.outcome }}"
+      - name: Set PR status to success
+        if: ${{ success() }}
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: 'success',
+              context: 'CI/CD Pipeline',
+              description: 'All tests passed',
+              target_url: '${{ github.run_url }}'
+            })
