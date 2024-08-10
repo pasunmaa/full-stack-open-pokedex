@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - e11.18-discord-hook
-    paths:
-      - 'discord.yml'
+    # paths:
+    #   - 'discord.yml'
 
 jobs:
   discord_webhook_job:
