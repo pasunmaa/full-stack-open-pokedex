@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - e11.18-discord-hook
-    # paths:
-    #   - 'discord.yml'
 
 jobs:
   discord_webhook_job:
@@ -30,7 +28,7 @@ jobs:
         DISCORD_EMBEDS: >
           [{
             "type":"Info",
-            "title":"Pokedex build",
+            "title":"Discord webhook test",
             "description":"Successful build from repo: ${{github.event.repository.name}}",
             "color":40811,
             "timestamp":"${{github.event.head_commit.timestamp}}",
@@ -38,7 +36,7 @@ jobs:
           }]
       uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
       with:
-        args: "A new version of Pokedex deployed by ${{ github.actor }}."
+        args: "A new version deployed by ${{ github.actor }}."
     - name: Build success discord notification
       if: ${{ failure() }}
       env:
@@ -48,7 +46,7 @@ jobs:
           DISCORD_EMBEDS: >
             [{
               "type": "Error",
-              "title": "Pokedex build",
+              "title":"Discord webhook test"
               "description": "Failed build from repo: ${{ github.repository }}",
               "fields":[{
                     {"name":"Commit Message","value":"[${{ github.sha }}](https://github.com/${{github.repository}}/commit/${{github.sha}}) - `${{github.event.head_commit.message}}`"},
@@ -62,14 +60,13 @@ jobs:
             }]
       uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
       with:
-        args: "A new version of Pokedex deployed by ${{ github.actor }}."
+        args: "A new version deployed by ${{ github.actor }}."
   
     - name: Build success discord notification LONG
       if: ${{ contains(join(github.event.commits.*.message, ' '), '#discordlong') == true }}
       env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DISCORD_USERNAME: PetriA
-          #DISCORD_EMBEDS: '[{"author":{"icon_url":"https://avatars.githubusercontent.com/${{ github.actor }}","name":"${{ github.actor }}","url":"https://github.com/${{github.actor}}"},"url":"https://github.com/${{github.repository}}/commit/${{github.sha}}","fields":[{"name":"Repository","value":"[${{github.event.repository.name}}](${{github.event.repository.clone_url}})","inline":true},{"name":"Branch","value":"[${{github.ref_name}}](https://github.com/${{github.repository}}/tree/${{github.ref_name}})","inline":true},{"name":"Event","value":"${{github.event_name}}","inline":true},{"name":"Job","value":"${{github.job}}","inline":true},{"name":"Commit Message","value":"[${{ github.sha }}](https://github.com/${{github.repository}}/commit/${{github.sha}}) - `${{github.event.head_commit.message}}`"},{"name":"Changed Files","value":"${{ steps.changed-files.outputs.all_changed_files }}"},{"name":"Author","value":"[${{github.event.head_commit.author.name}}](https://github.com/${{github.actor}})"}],"color":1127128,"timestamp":"${{github.event.head_commit.timestamp}}","footer":{"text":"${{github.event.head_commit.timestamp}}"}}]'
           DISCORD_EMBEDS: >
             [{
                 "author":{
@@ -92,4 +89,4 @@ jobs:
             }]  
       uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
       with:
-        args: "LONG: A new version of Pokedex deployed by ${{ github.actor }}."
+        args: "LONG: A new version deployed by ${{ github.actor }}."

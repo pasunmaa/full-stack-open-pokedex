@@ -39,26 +39,53 @@ jobs:
         name: Trigger deployment
         run: curl https://api.render.com/deploy/srv-${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}
 
+      - name: Build success discord notification
+        if: ${{ success() && (contains(join(github.event.commits.*.message, ' '), '#discord') == true) }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_USERNAME: PetriA
+          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }} 
+          DISCORD_EMBEDS: >
+            [{
+              "type":"Info",
+              "title":"Pokedex build",
+              "description":"Successful build from repo: ${{github.event.repository.name}}",
+              "color":40811,
+              "timestamp":"${{github.event.head_commit.timestamp}}",
+              "footer":{"text":"${{github.event.head_commit.timestamp}}"}
+            }]
+        uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
+        with:
+          args: "A new version of Pokedex deployed by ${{ github.actor }}."
+      
+      - name: Build failure discord notification
+        if: ${{ failure() }}
+        env:
+            DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+            DISCORD_USERNAME: PetriA
+            COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }} 
+            DISCORD_EMBEDS: >
+              [{
+                "type": "Error",
+                "title": "Pokedex build",
+                "description": "Failed build from repo: ${{ github.repository }}",
+                "fields":[{
+                      {"name":"Commit Message","value":"[${{ github.sha }}](https://github.com/${{github.repository}}/commit/${{github.sha}}) - `${{github.event.head_commit.message}}`"},
+                      {"name":"Changed Files","value":"${{ steps.changed-files.outputs.all_changed_files }}"},
+                      {"name":"Author","value":"[${{github.event.head_commit.author.name}}](https://github.com/${{github.actor}})"
+                  }],
+                "color": 16711680,
+                "url":"https://github.com/${{github.repository}}/commit/${{github.sha}}",
+                "timestamp":"${{github.event.head_commit.timestamp}}",
+                "footer":{"text":"${{github.event.head_commit.timestamp}}"}
+              }]
+        uses: Ilshidur/action-discord@0c4b27844ba47cb1c7bee539c8eead5284ce9fa9
+        with:
+          args: "A new version of Pokedex deployed by ${{ github.actor }}."
+  
       # - name: Notify successful deployment
+      #   Does NOT currently work
       #   uses: rjstone/discord-webhook-notify@v1.0.4
-      #   if: ${{ success() }}
-      #   with:
-      #     severity: info
-      #     text: 'Deployment of pokedex to Render succeeded :-)'
-      #     description: ""
-      #     details: ""
-      #     webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
-      #   env:
-      #     DEBUG: true  # Enable debug mode to log the response
-      # - name: Notify deployment failure
-      #   uses: rjstone/discord-webhook-notify@v1.0.4
-      #   if: ${{ failure() }}
-      #   with:
-      #     severity: error
-      #     text: 'Deployment of podedex to Render failed.'
-      #     description: "Initiator: ${{ github.actor }}"
-      #     details: "Repo: ${{ github.repository }}"
-      #     webhookUrl: ${{ secrets.DISCORD_WEBHOOK }}
 
   tag_release:
     needs: [simple_deployment_pipeline]
