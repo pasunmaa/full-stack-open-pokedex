@@ -1,4 +1,4 @@
-name: Testing Discord webhook
+name: Testing Discord webhook now
 
 on:
   push:
