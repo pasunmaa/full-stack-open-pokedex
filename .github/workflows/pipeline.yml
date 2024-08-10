@@ -44,7 +44,6 @@ jobs:
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
           DISCORD_USERNAME: PetriA
-          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }} 
           DISCORD_EMBEDS: >
             [{
               "type":"Info",
@@ -63,13 +62,12 @@ jobs:
         env:
             DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
             DISCORD_USERNAME: PetriA
-            COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }} 
             DISCORD_EMBEDS: >
               [{
                 "type": "Error",
                 "title": "Pokedex build",
                 "description": "Failed build from repo: ${{ github.repository }}",
-                "fields":[{
+                "fields":[
                       {"name":"Commit Message","value":"[${{ github.sha }}](https://github.com/${{github.repository}}/commit/${{github.sha}}) - `${{github.event.head_commit.message}}`"},
                       {"name":"Changed Files","value":"${{ steps.changed-files.outputs.all_changed_files }}"},
                       {"name":"Author","value":"[${{github.event.head_commit.author.name}}](https://github.com/${{github.actor}})"
